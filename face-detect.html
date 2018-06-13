@@ -1,0 +1,134 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>tracking.js - first tracking</title>
+  <script src="build/tracking-min.js"></script>
+  <script src="build/data/face-min.js"></script>
+  <script src="uild/data/eye-min.js"></script>
+  <script src="build/data/mouth-min.js"></script>
+  <style>
+  video, canvas {
+    position: absolute;
+  }
+
+  .demo-container {
+    position: relative;
+    width:75%;
+    margin:0 auto;
+  }
+
+  .left,.right {
+    position: relative;
+    display: block;
+    float:left;
+    width:50%;
+  }
+  .right {
+    position: relative;
+    display: block;
+    float:right;
+    width:50%;
+  }
+  
+  #noFace,#gotFace {
+    position: absolute;
+    top:0px;
+    left:0px;
+    transition: opacity 0.5 
+    -webkit-transition: opacity 0.5s; /* Safari */
+    transition: opacity 0.5s;
+  }
+
+  #noFace {
+    opacity:1;
+  }
+
+  #gotFace {
+    opacity:0;
+  }
+
+  .chat {
+    font-size:20px;
+  }
+  </style>
+</head>
+<body>
+    <div class="demo-container">
+      <div class="left">
+        <video id="video" width="480" height="320" preload autoplay loop muted></video>
+        <canvas id="canvas" width="480" height="320"></canvas>
+      </div>
+      <div class="right">
+        <div id="noFace">
+          <span class="chat">Hey, where you going?</span>
+          <br>
+          <img src="assets/sad.png" id="img" width="200" />
+        </div>
+        <div id="gotFace">
+          <span class="chat">Yeah, you are finally here</span>
+          <br>
+          <img src="assets/happy.png" id="img" width="200" />
+        </div>
+      </div>
+    </div>
+  <script>
+    window.onload = function() {
+      var video = document.getElementById('video');
+      var canvas = document.getElementById('canvas');
+      var context = canvas.getContext('2d');
+
+
+      var gotFaceDiv = document.getElementById('gotFace');
+      var noFaceDiv = document.getElementById('noFace');
+      var gotFace = false;
+      
+      var tracker = new tracking.ObjectTracker(['face']); //['face','eye','mouth']
+      tracker.setInitialScale(4);
+      tracker.setStepSize(2);
+      tracker.setEdgesDensity(0.1);
+
+      tracking.track('#video',tracker,{camera:true});
+
+      tracker.on('track',function(event){
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        if (event.data.length === 0) {
+          //no face detected
+          gotFace = false;
+        } 
+        else {
+          gotFace = true;
+
+          event.data.forEach(function(rect) {
+            context.strokeStyle = '#ff0000';
+            context.strokeRect(rect.x, rect.y, rect.width, rect.height);
+            context.font = '11px Helvetica';
+            context.fillStyle = "#fff";
+            context.fillText('x: ' + rect.x + 'px', rect.x + rect.width + 5, rect.y + 11);
+            context.fillText('y: ' + rect.y + 'px', rect.x + rect.width + 5, rect.y + 22);
+          });
+        }
+        updateChat(gotFace);
+      });
+
+      var interval = setInterval(updateChat(gotFace), 3000);
+      
+      //update text and image based on where face is detected or not
+      function updateChat(face){
+        //change opacity of divs
+        if(face)
+        {
+          console.log('gotFace');
+          noFaceDiv.style.opacity = 0;
+          gotFaceDiv.style.opacity = 1;
+        }
+        else{
+          console.log('noFace'); 
+          gotFaceDiv.style.opacity = 0;
+          noFaceDiv.style.opacity = 1;
+        }
+      }
+    };
+  </script>
+</body>
+</html>
